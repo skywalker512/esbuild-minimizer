@@ -1,12 +1,11 @@
 {
-  "name": "esbuild-webpack-plugin",
+  "name": "esbuild-minimizer",
   "version": "1.1.0",
   "description": "Use esbuild as minifier.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
-    "dist",
-    "src"
+    "dist"
   ],
   "scripts": {
     "dev": "tsc -w --p src",
@@ -14,7 +13,6 @@
     "prepublishOnly": "npm run build"
   },
   "keywords": [],
-  "author": "chencheng <sorrycc@gmail.com>",
   "license": "MIT",
   "peerDependencies": {
     "webpack": "^5"
