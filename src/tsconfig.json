@@ -2,7 +2,10 @@
   "compilerOptions": {
     "outDir": "../dist",
     "module": "commonjs",
-    "lib": ["ESNext", "DOM"],
+    "lib": [
+      "ESNext",
+      "DOM"
+    ],
     "sourceMap": false,
     "target": "esnext",
     "moduleResolution": "node",
@@ -17,5 +20,7 @@
     "removeComments": false,
     "preserveSymlinks": true
   },
-  "include": ["."]
+  "include": [
+    "."
+  ]
 }

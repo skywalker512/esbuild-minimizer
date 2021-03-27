@@ -1,125 +1,94 @@
-// @ts-ignore
-import { ModuleFilenameHelpers, Compiler, compilation } from 'webpack';
-import { RawSource, SourceMapSource } from 'webpack-sources';
-import {
-  startService,
-  Service,
-  TransformOptions,
-  TransformResult,
-} from 'esbuild';
+import { ModuleFilenameHelpers, Compiler, Compilation } from 'webpack';
+import { TransformOptions, transform } from 'esbuild';
 
-export interface ESBuildPluginOptions
-  extends Omit<TransformOptions, 'minify' | 'sourcemap' | 'sourcefile'> {}
+type Filter = string | RegExp;
+type FilterObject = {
+  include?: Filter | Filter[];
+  exclude?: Filter | Filter[];
+};
+
+export type ESBuildPluginOptions = Omit<
+  TransformOptions,
+  'minify' | 'sourcemap' | 'sourcefile'
+> &
+  FilterObject;
+
+const isJsFile = /\.js$/i;
 
 export default class ESBuildPlugin {
-  private readonly options: ESBuildPluginOptions;
-  private static service: Service;
+  constructor(private readonly options: ESBuildPluginOptions = {}) {}
+  async transformAssets(
+    compilation: Compilation,
+    assetNames: string[],
+  ): Promise<void> {
+    const {
+      options: { devtool },
+    } = compilation.compiler;
 
-  constructor(options: ESBuildPluginOptions = {}) {
-    this.options = options;
-  }
+    const { SourceMapSource, RawSource } = compilation.compiler.webpack.sources;
 
-  static async ensureService(enforce?: boolean) {
-    if (!ESBuildPlugin.service || enforce) {
-      ESBuildPlugin.service = await startService();
-    }
-  }
+    const sourcemap = !!(devtool && (devtool as string).includes('source-map'));
 
-  async transformCode({
-    source,
-    file,
-    devtool,
-  }: {
-    source: string;
-    file: string;
-    devtool: string | boolean | undefined;
-  }) {
-    let result: TransformResult | undefined;
+    const { include, exclude, ...transformOptions } = this.options;
 
-    const transform = async () =>
-      await ESBuildPlugin.service.transform(source, {
-        ...this.options,
-        minify: true,
-        sourcemap: !!devtool,
-        sourcefile: file,
+    const transforms = assetNames
+      .filter(
+        (assetName) =>
+          isJsFile.test(assetName) &&
+          ModuleFilenameHelpers.matchObject({ include, exclude }, assetName),
+      )
+      .map(
+        (assetName) => [assetName, compilation.getAsset(assetName)!] as const,
+      )
+      .map(async ([assetName, { info, source: assetSource }]) => {
+        const { source, map } = assetSource.sourceAndMap();
+        const result = await transform(source.toString(), {
+          ...transformOptions,
+          sourcemap,
+          sourcefile: assetName,
+        });
+
+        compilation.updateAsset(
+          assetName,
+          sourcemap
+            ? new SourceMapSource(
+                result.code || '',
+                assetName,
+                result.map as any,
+                source?.toString(),
+                map!,
+                true,
+              )
+            : new RawSource(result.code || ''),
+          {
+            ...info,
+            minimized: true,
+          },
+        );
       });
 
-    try {
-      result = await transform();
-    } catch (e) {
-      // esbuild service might be destroyed when using parallel-webpack
-      if ([
-        'The service is no longer running',
-        'The service was stopped'
-      ].includes(e.message)) {
-        await ESBuildPlugin.ensureService(true);
-        result = await transform();
-      } else {
-        throw e;
-      }
+    if (transforms.length > 0) {
+      await Promise.all(transforms);
     }
-
-    return result;
   }
 
   apply(compiler: Compiler): void {
-    const matchObject = ModuleFilenameHelpers.matchObject.bind(undefined, {});
-    const { devtool } = compiler.options;
-
     const plugin = 'ESBuild Plugin';
-    compiler.hooks.compilation.tap(
-      plugin,
-      (compilation: compilation.Compilation) => {
-        compilation.hooks.optimizeChunkAssets.tapPromise(
-          plugin,
-          async (chunks: compilation.Chunk[]) => {
-            for (const chunk of chunks) {
-              for (const file of chunk.files) {
-                if (!matchObject(file)) {
-                  continue;
-                }
-                if (!/\.m?js(\?.*)?$/i.test(file)) {
-                  continue;
-                }
-
-                const assetSource = compilation.assets[file];
-                const { source, map } = assetSource.sourceAndMap();
-                const result = await this.transformCode({
-                  source,
-                  file,
-                  devtool,
-                });
-
-                // @ts-ignore
-                compilation.updateAsset(file, () => {
-                  if (devtool) {
-                    return new SourceMapSource(
-                      result.js || '',
-                      file,
-                      result.jsSourceMap as any,
-                      source,
-                      map,
-                      true,
-                    );
-                  } else {
-                    return new RawSource(result.js || '');
-                  }
-                });
-              }
-            }
-          },
-        );
-      },
-    );
-
-    compiler.hooks.beforeRun.tapPromise(plugin, async () => {
-      await ESBuildPlugin.ensureService();
+    const meta = JSON.stringify({
+      name: plugin,
+      options: this.options,
     });
 
-    compiler.hooks.done.tapPromise(plugin, async () => {
-      if (ESBuildPlugin.service) {
-        await ESBuildPlugin.service.stop();
-      }
+    compiler.hooks.compilation.tap(plugin, (compilation) => {
+      compilation.hooks.chunkHash.tap(plugin, (_, hash) => hash.update(meta));
+      compilation.hooks.processAssets.tapPromise(
+        {
+          name: plugin,
+          stage: Compilation.PROCESS_ASSETS_STAGE_OPTIMIZE_SIZE,
+        },
+        async (assets) =>
+          this.transformAssets(compilation, Object.keys(assets)),
+      );
     });
   }
 }

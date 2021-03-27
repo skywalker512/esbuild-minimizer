@@ -11,24 +11,16 @@
   "scripts": {
     "dev": "tsc -w --p src",
     "build": "rm -rf dist && tsc -p src",
-    "build:example": "APP_ROOT=example BABEL_CACHE=none TERSER_CACHE=none umi build",
-    "build:example:esbuild": "ESBUILD=1 APP_ROOT=example BABEL_CACHE=none TERSER_CACHE=none umi build",
-    "build:example:nocompress": "COMPRESS=none APP_ROOT=example BABEL_CACHE=none TERSER_CACHE=none umi build",
-    "build:test": "APP_ROOT=test/fixtures/normal umi build",
-    "test": "umi-test",
-    "prepublishOnly": "npm run build && np --no-cleanup --yolo --no-publish"
+    "prepublishOnly": "npm run build"
   },
   "keywords": [],
   "author": "chencheng <sorrycc@gmail.com>",
   "license": "MIT",
   "peerDependencies": {
-    "webpack": "^4.0.0"
+    "webpack": "^5"
   },
   "dependencies": {
-    "esbuild": "^0.7.15"
-  },
-  "gitHooks": {
-    "pre-commit": "lint-staged"
+    "esbuild": "^0.10"
   },
   "lint-staged": {
     "*.js": [
@@ -39,22 +31,10 @@
     ]
   },
   "devDependencies": {
-    "@types/babel__traverse": "^7.0.13",
-    "@types/jest": "^26.0.4",
-    "@types/node": "^14.0.23",
-    "@types/webpack": "^4.41.21",
-    "@umijs/test": "^3.2.9",
-    "antd": "^4.4.2",
-    "bizcharts": "^4.0.9",
+    "@types/webpack": "^5",
     "lint-staged": "^10.2.11",
-    "np": "^6.3.2",
-    "prettier": "^2.0.5",
-    "puppeteer": "^5.1.0",
-    "serve-handler": "^6.1.3",
-    "typescript": "^3.9.6",
-    "umi": "^3.2.9",
-    "webpack": "^4.43.0",
-    "webpack-sources": "^1.4.3",
-    "yorkie": "^2.0.0"
+    "prettier": "^2",
+    "typescript": "^4",
+    "webpack": "^5"
   }
 }
