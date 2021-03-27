@@ -7,7 +7,7 @@ type FilterObject = {
   exclude?: Filter | Filter[];
 };
 
-export type ESBuildPluginOptions = Omit<
+type ESBuildMinimizerPluginOptions = Omit<
   TransformOptions,
   'minify' | 'sourcemap' | 'sourcefile'
 > &
@@ -15,8 +15,8 @@ export type ESBuildPluginOptions = Omit<
 
 const isJsFile = /\.js$/i;
 
-export default class ESBuildPlugin {
-  constructor(private readonly options: ESBuildPluginOptions = {}) {}
+class ESBuildMinimizerPlugin {
+  constructor(private readonly options: ESBuildMinimizerPluginOptions = {}) {}
   async transformAssets(
     compilation: Compilation,
     assetNames: string[],
@@ -92,3 +92,5 @@ export default class ESBuildPlugin {
     });
   }
 }
+
+export = ESBuildMinimizerPlugin;

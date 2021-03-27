@@ -1,12 +1,15 @@
 {
-  "name": "esbuild-minimizer",
-  "version": "1.1.0",
+  "name": "@starfleet/esbuild-minimizer",
+  "version": "0.0.1",
   "description": "Use esbuild as minifier.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
     "dist"
   ],
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org"
+  },
   "scripts": {
     "dev": "tsc -w --p src",
     "build": "rm -rf dist && tsc -p src",
@@ -29,7 +32,6 @@
     ]
   },
   "devDependencies": {
-    "@types/webpack": "^5",
     "lint-staged": "^10.2.11",
     "prettier": "^2",
     "typescript": "^4",
