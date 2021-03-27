@@ -2,7 +2,7 @@
 
 Use [esbuild](https://github.com/evanw/esbuild) as minifier for webpack.
 
-## Why is this package?
+## What is this package?
 
 从 https://github.com/sorrycc/esbuild-webpack-plugin 修改而来
 
