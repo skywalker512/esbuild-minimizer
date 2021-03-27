@@ -13,7 +13,7 @@ npm i @starfleet/esbuild-minimizer
 ```
 
 ```js
-const ESBuildMinimizerPlugin = require('@starfleet/esbuild-minimizer').default;
+const ESBuildMinimizerPlugin = require('@starfleet/esbuild-minimizer');
 
 module.exports = {
   optimization: {
